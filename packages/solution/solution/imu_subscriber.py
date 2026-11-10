@@ -52,6 +52,8 @@ class ImuSubscriber(Node):
         #
         # Assign the returned subscription to self.sub_imu.
         # ------------------------------------------------------------
+        self.sub_imu = self.create_subscription(
+            Imu, topic, self.cb_imu, qos_profile_sensor_data)
 
         self.create_timer(log_period, self.cb_log)
 
@@ -70,7 +72,15 @@ class ImuSubscriber(Node):
         # Store an ImuReading with stamp_sec, accel, gyro, and rpy,
         # replacing the `pass` below. Do not print here.
         # ------------------------------------------------------------
-        pass
+        timestamp = msg.header.stamp
+        lin_accel = msg.linear_acceleration
+        ang_accel = msg.angular_acceleration
+        self.latest_reading = ImuReading(
+            timestamp.sec + timestamp.nanosec * 1e-9,
+            (lin_accel.x, lin_accel.y, lin_accel.z),
+            (ang_accel.x, ang_accel.y, ang_accel.z),
+            quaternion_to_euler(msg.orientation)
+        )
 
     def cb_log(self) -> None:
         """Log the most recently received IMU reading."""
